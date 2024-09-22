@@ -11,7 +11,7 @@ version "0.1b"
 lua54 "yes"
 
 shared_scripts{
-
+	"shared/items.lua",
 }
 
 client_scripts{
@@ -19,9 +19,9 @@ client_scripts{
 }
 
 server_scripts{
-	"server/items.lua",
 	"server/metadata.lua",
-	"server/sort.lua",
+	"server/init.lua",
+	"server/inventory.lua",
 	"server/exports.lua",
 }
 

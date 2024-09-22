@@ -1,13 +1,22 @@
+CATEGORIES = {}
+USABLE_ITEMS = {}
+CRAFTABLE_ITEMS = {}
+BUYABLE_ITEMS = {}
+SELLABLE_ITEMS = {}
+
 ITEMS = {
+--+--+--+--+--+--+--+ START +--+--+--+--+--+--+--+
+
+
 --+--+--+--+--+--+--+ Food / Drinks +--+--+--+--+--+--+--+
     ["water_bottle"] = {
         label = "Water Bottle",
         description = "A bottle of water.",
         category = "food",
         weight = 1,
-        size = {x = 1, y = 1},
+        size = {x = 1, y = 3},
         model = "prop_ld_flow_bottle",
-        unique = false,
+        stackable = true,
         usable = true,
         useOptions = {
             removeAfterUse = 1,
@@ -37,4 +46,7 @@ ITEMS = {
     },
 
 --+--+--+--+--+--+--+ Food / Drinks +--+--+--+--+--+--+--+
+
+
+--+--+--+--+--+--+--+ END +--+--+--+--+--+--+--+
 }

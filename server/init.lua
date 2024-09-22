@@ -1,12 +1,6 @@
-CATEGORIES = {}
-USABLE_ITEMS = {}
-CRAFTABLE_ITEMS = {}
-BUYABLE_ITEMS = {}
-SELLABLE_ITEMS = {}
-
 local function checkType(value, expectedType, name)
     if type(value) ~= expectedType then
-        print("Expected", name, "to be of type", expectedType, "got", type(value))
+        print("Expected\27[31m", name, "\27[0mto be of type\27[31m", expectedType, "\27[0mgot\27[31m", type(value))
         return false
     end
 
@@ -14,7 +8,7 @@ local function checkType(value, expectedType, name)
 end
 
 local function checkItem(item, data)
-    local errorMessage = "Error initializing: "
+    local errorMessage = "Error initializing:\27[31m"
     if not checkType(data.label, "string", "label") then print(errorMessage, item) return false end
     if not checkType(data.description, "string", "description") then print(errorMessage, item) return false end
     if not checkType(data.category, "string", "category") then print(errorMessage, item) return false end
@@ -23,7 +17,7 @@ local function checkItem(item, data)
     if not checkType(data.size.x, "number", "size.x") then print(errorMessage, item) return false end
     if not checkType(data.size.y, "number", "size.y") then print(errorMessage, item) return false end
     if not checkType(data.model, "string", "model") then print(errorMessage, item) return false end
-    if not checkType(data.unique, "boolean", "unique") then print(errorMessage, item) return false end
+    if not checkType(data.stackable, "boolean", "stackable") then print(errorMessage, item) return false end
 
     if not checkType(data.usable, "boolean", "usable") then print(errorMessage, item) return false end
     if data.usable then
@@ -61,14 +55,23 @@ local function checkItem(item, data)
     return true
 end
 
-local function addMetaDataOnItemCreation(item, name, showToPlayer, onSpawn, onUse, onDrop, onPickup)
+local function addMetaData(item, name, showToPlayer, onSpawn, onUse, onDrop, onPickup)
     if not ITEMS[item] then
-        print("Item", item, "does not exist")
+        print("Item\27[31m", item, "\27[0mdoes not exist")
         return
     end
 
+    if ITEMS[item].stackable then
+        print("Item\27[31m", item, "\27[0mis stackable. MetaData can only be added to non-stackable items!")
+        return
+    end
+
+    if not ITEMS[item].metaData then
+        ITEMS[item].metaData = {}
+    end
+
     if ITEMS[item].metaData[name] then
-        print("MetaData", name, "already exists for item", item)
+        print("MetaData\27[31m", name, "\27[0malready exists for item", item)
         return
     end
 
@@ -84,7 +87,7 @@ end
 local function initializeItem(item, data)
     if ITEM_METADATA[item] then
         for name, metaData in pairs(ITEM_METADATA[item]) do
-            addMetaDataOnItemCreation(item, name, metaData.showToPlayer, metaData.onSpawn, metaData.onUse, metaData.onDrop, metaData.onPickup)
+            addMetaData(item, name, metaData.showToPlayer, metaData.onSpawn, metaData.onUse, metaData.onDrop, metaData.onPickup)
         end
     end
 
@@ -109,10 +112,6 @@ local function initializeItem(item, data)
     if data.canSell then
         table.insert(SELLABLE_ITEMS, item)
     end
-
-    data.metaData = {}
-
-    return true
 end
 
 local function addItem(item, data)
@@ -127,30 +126,42 @@ local function addItem(item, data)
     end
 end
 
-local function getItemsTable()
-    return ITEMS
-end
-
-local function getItemsByCategory(category)
-    return CATEGORIES[category]
-end
-
-local function getUsableItems()
-    return USABLE_ITEMS
-end
-
-local function getCraftableItems()
-    return CRAFTABLE_ITEMS
-end
-
-local function getBuyableItems()
-    return BUYABLE_ITEMS
-end
-
-local function getSellableItems()
-    return SELLABLE_ITEMS
-end
-
 for item, data in pairs(ITEMS) do
     if checkItem(item, data) then initializeItem(item, data) end
 end
+
+-- print("Items:",
+--     json.encode(
+--         getItemsTable()
+--     )
+-- )
+
+-- print("Items by category:",
+--     json.encode(
+--         getItemsByCategory("food")
+--     )
+-- )
+
+-- print("Usable items:",
+--     json.encode(
+--         getUsableItems()
+--     )
+-- )
+
+-- print("Craftable items:",
+--     json.encode(
+--         getCraftableItems()
+--     )
+-- )
+
+-- print("Buyable items:",
+--     json.encode(
+--         getBuyableItems()
+--     )
+-- )
+
+-- print("Sellable items:",
+--     json.encode(
+--         getSellableItems()
+--     )
+-- )
