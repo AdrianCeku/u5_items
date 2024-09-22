@@ -61,7 +61,33 @@ local function checkItem(item, data)
     return true
 end
 
+local function addMetaDataOnItemCreation(item, name, showToPlayer, onSpawn, onUse, onDrop, onPickup)
+    if not ITEMS[item] then
+        print("Item", item, "does not exist")
+        return
+    end
+
+    if ITEMS[item].metaData[name] then
+        print("MetaData", name, "already exists for item", item)
+        return
+    end
+
+    ITEMS[item].metaData[name] = {
+        showToPlayer = showToPlayer,
+        onSpawn = onSpawn,
+        onUse = onUse,
+        onDrop = onDrop,
+        onPickup = onPickup
+    }
+end
+
 local function initializeItem(item, data)
+    if ITEM_METADATA[item] then
+        for name, metaData in pairs(ITEM_METADATA[item]) do
+            addMetaDataOnItemCreation(item, name, metaData.showToPlayer, metaData.onSpawn, metaData.onUse, metaData.onDrop, metaData.onPickup)
+        end
+    end
+
     if not CATEGORIES[data.category] then
         CATEGORIES[data.category] = {}
     end
@@ -123,23 +149,6 @@ end
 
 local function getSellableItems()
     return SELLABLE_ITEMS
-end
-
-local function addMetaDataOnItemCreation(item, name, showToPlayer, getFunction)
-    if not ITEMS[item] then
-        print("Item", item, "does not exist")
-        return
-    end
-
-    if ITEMS[item].metaData[name] then
-        print("MetaData", name, "already exists for item", item)
-        return
-    end
-
-    ITEMS[item].metaData[name] = {
-        showToPlayer = showToPlayer,
-        getFunction = getFunction
-    }
 end
 
 for item, data in pairs(ITEMS) do

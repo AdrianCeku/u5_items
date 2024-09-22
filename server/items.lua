@@ -16,7 +16,7 @@ ITEMS = {
         craftable = true,
         craftOptions = {
             ingredients = {
-                ["plastic"] = 1,
+                ["plastic_bottle"] = 1,
                 ["water"] = 1,
             },
             duration = 5000,
