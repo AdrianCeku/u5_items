@@ -3,11 +3,6 @@ db = exports["u5_sqlite"]
 local playerInventoryTableName = "player_inventory"
 local containerInventoryTableName = "container_inventory"
 
-local emptyInventory = {
-    stackables = {}, 
-    uniques = {}
-}
-
 function getUid(source)
     return "license:5879eeedc4a81dfd713978626df5e93371b361c3"
     -- return GetPlayerIdentifierByType(source, "license")
@@ -16,37 +11,50 @@ end
 db:createTable(playerInventoryTableName,
     {
         {"uid", "STRING", "PRIMARY KEY NOT NULL"},
-        {"items", "TEXT", "NOT NULL"}
+        {"stackable_items", "TEXT", "NOT NULL"},
+        {"unique_items", "TEXT", "NOT NULL"}
     }
 )
 
 local function createPlayerEntry(source)
-    db:insert(playerInventoryTableName, {uid = getUid(source), items = json.encode(emptyInventory)})
+    db:insert(playerInventoryTableName, {uid = getUid(source), stackable_items = "{}", unique_items = "{}"})
 end
 
 local function getInventory(source)
-    local result = db:select(playerInventoryTableName, {"items"}, {uid = getUid(source)})
-    if not result then createPlayerEntry(source) return emptyInventory end
-    return json.decode(result[1].items)
+    local result = db:select(playerInventoryTableName, {"stackable_items", "unique_items"}, {uid = getUid(source)})
+    if not result then createPlayerEntry(source) return {stackables = {},  uniques= {}} end
+    return {stackables = json.decode(result[1].stackable_items), uniques = json.decode(result[1].unique_items)}
 end
 
-local function matchTables(table1, table2)
-    for k, v in pairs(table1) do
-        if table2[k] ~= v then return false end
+local function setInventory(source, inventory)
+    local stackable_items = json.encode(inventory.stackables)
+    local unique_items = json.encode(inventory.uniques)
+
+    db:update(playerInventoryTableName, {
+        stackable_items = stackable_items,
+        unique_items = unique_items
+    }, {uid = getUid(source)})
+end
+
+local function doesMetaDataMatch(meta, metaDataToMatch)
+    for key, value in pairs(matchMeta) do
+        if not meta[key] then return false end
+        if meta[key].value ~= value then return false end
     end
+
     return true
 end
 
-local function removeUniqueItemFromMeta(source, metaDataToMatch)
+local function removeUniqueItemFromMetaData(source, metaDataToMatch)
     local inventory = getInventory(source)
     
     for i=1, #inventory.uniques do
         local item = inventory.uniques[i]
         local metaData = item.metaData
 
-        if matchTables(metaData, metaDataToMatch) then
+        if doesMetaDataMatch(metaData, metaDataToMatch) then
             table.remove(inventory.uniques, i)
-            db:update(playerInventoryTableName, {items = json.encode(inventory)}, {uid = getUid(source)})
+            setInventory(source, inventory)
             return true
         end
     end
@@ -57,7 +65,7 @@ end
 local function removeUniqueItemFromIndex(source, index)
     local inventory = getInventory(source)
     table.remove(inventory.uniques, index)
-    db:update(playerInventoryTableName, {items = json.encode(inventory)}, {uid = getUid(source)})
+    setInventory(source, inventory)
 end
 
 local function removeStackableItem(source, itemName, amount)
@@ -73,7 +81,7 @@ local function removeStackableItem(source, itemName, amount)
         inventory.stackables[itemName] = nil
     end
 
-    db:update(playerInventoryTableName, {items = json.encode(inventory)}, {uid = getUid(source)})
+    setInventory(source, inventory)
     return true
 end
 
@@ -87,7 +95,7 @@ local function giveStackableItem(source, itemName, amount)
         inventory.stackables[itemName] = amount
     end
 
-    db:update(playerInventoryTableName, {items = json.encode(inventory)}, {uid = getUid(source)})
+    setInventory(source, inventory)
 end
 
 local function giveUniqueItem(source, itemName, additionalMetaData)
@@ -117,7 +125,7 @@ local function giveUniqueItem(source, itemName, additionalMetaData)
         } 
     )
 
-    db:update(playerInventoryTableName, {items = json.encode(inventory)}, {uid = getUid(source)})
+    setInventory(source, inventory)
 end
 
 local function giveItem(source, itemName, amount, additionalMetaData)
@@ -133,18 +141,11 @@ local function giveItem(source, itemName, amount, additionalMetaData)
     end
 end
 
--- db:update(playerInventoryTableName, {items = json.encode({
---     ["water_bottle"] = {
---         amount = 5,
---         metadata = {}
---     }
--- }
--- )}, {uid = GetPlayerIdentifierByType(1, "license")})
-
+-- setInventory(source, inventory)
 
 -- createPlayerEntry(1)
 -- giveItem(1, "reusable_water_bottle", 1)
-giveItem(1, "id_card", 1)
+giveItem(1, "donut", 1)
 -- removeItem(1, "water_bottle", 4)
 -- print("Inventory:", 
 --     json.encode(

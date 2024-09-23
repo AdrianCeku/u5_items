@@ -37,19 +37,27 @@ local function checkItem(item, data)
     if not checkType(data.canBuy, "boolean", "canBuy") then print(errorMessage, item) return false end
     if data.canBuy then
         if not checkType(data.prices, "table", "prices") then print(errorMessage, item) return false end
-        if not checkType(data.prices.fiat, "table", "prices.fiat") then print(errorMessage, item) return false end
-        if not checkType(data.prices.fiat.buy, "number", "prices.fiat.buy") then print(errorMessage, item) return false end
-        if not checkType(data.prices.black, "table", "prices.black") then print(errorMessage, item) return false end
-        if not checkType(data.prices.black.buy, "number", "prices.black.buy") then print(errorMessage, item) return false end
+        if data.prices.fiat then
+            if not checkType(data.prices.fiat, "table", "prices.fiat") then print(errorMessage, item) return false end
+            if not checkType(data.prices.fiat.buy, "number", "prices.fiat.buy") then print(errorMessage, item) return false end
+        end
+        if data.prices.black then             
+            if not checkType(data.prices.black, "table", "prices.black") then print(errorMessage, item) return false end
+            if not checkType(data.prices.black.buy, "number", "prices.black.buy") then print(errorMessage, item) return false end
+        end
     end
 
     if not checkType(data.canSell, "boolean", "canSell") then print(errorMessage, item) return false end
     if data.canSell then
         if not checkType(data.prices, "table", "prices") then print(errorMessage, item) return false end
-        if not checkType(data.prices.fiat, "table", "prices.fiat") then print(errorMessage, item) return false end
-        if not checkType(data.prices.fiat.sell, "number", "prices.fiat.sell") then print(errorMessage, item) return false end
-        if not checkType(data.prices.black, "table", "prices.black") then print(errorMessage, item) return false end
-        if not checkType(data.prices.black.sell, "number", "prices.black.sell") then print(errorMessage, item) return false end
+        if data.prices.fiat then
+            if not checkType(data.prices.fiat, "table", "prices.fiat") then print(errorMessage, item) return false end
+            if not checkType(data.prices.fiat.sell, "number", "prices.fiat.sell") then print(errorMessage, item) return false end
+        end
+        if data.prices.black then
+            if not checkType(data.prices.black, "table", "prices.black") then print(errorMessage, item) return false end
+            if not checkType(data.prices.black.sell, "number", "prices.black.sell") then print(errorMessage, item) return false end
+        end
     end
 
     return true

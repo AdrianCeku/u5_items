@@ -35,13 +35,34 @@ ITEMS = {
         canSell = true,
         prices = {
             fiat = {
-                buy = 5,
-                sell = 2,
+                buy = 200,
+                sell = 100,
             },
-            black = {
-                buy = 10,
-                sell = 5,
-            }
+        }
+    },
+
+    ["donut"] = {
+        label = "Donut",
+        description = "A tasty donut.",
+        category = "food",
+        weight = 1,
+        size = {x = 1, y = 1},
+        model = "prop_donut_02b",
+        stackable = true,
+        usable = true,
+        useOptions = {
+            removeAfterUse = 1,
+            duration = 2000,
+        },
+        craftable = false,
+        craftOptions = {},
+        canBuy = true,
+        canSell = true,
+        prices = {
+            fiat = {
+                buy = 30,
+                sell = 15,
+            },
         }
     },
 
@@ -73,6 +94,8 @@ ITEMS = {
         }
     }
 },
+
+--+--+--+--+--+--+--+ licenses +--+--+--+--+--+--+--+
 
 --+--+--+--+--+--+--+ END +--+--+--+--+--+--+--+
 }
