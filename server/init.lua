@@ -56,7 +56,6 @@ local function checkItem(item, data)
 end
 
 local function addMetaData(item, name, showToPlayer, onSpawn, onUse, onDrop, onPickup)
-    print("Adding metadata", name, "to item", item)
     if not ITEMS[item] then
         print("Item\27[31m", item, "\27[0mdoes not exist")
         return
@@ -83,7 +82,7 @@ end
 
 local function initializeItem(item, data)
     ITEMS[item].metaData = {}
-    
+
     if ITEM_METADATA[item] then
         for name, metaData in pairs(ITEM_METADATA[item]) do
             addMetaData(item, name, metaData.showToPlayer, metaData.onSpawn, metaData.onUse, metaData.onDrop, metaData.onPickup)
