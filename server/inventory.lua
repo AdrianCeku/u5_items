@@ -9,7 +9,8 @@ local emptyInventory = {
 }
 
 function getUid(source)
-    return GetPlayerIdentifierByType(source, "license")
+    return "license:5879eeedc4a81dfd713978626df5e93371b361c3"
+    -- return GetPlayerIdentifierByType(source, "license")
 end
 
 db:createTable(playerInventoryTableName,
@@ -95,20 +96,22 @@ local function giveUniqueItem(source, itemName, additionalMetaData)
 
     local inventory = getInventory(source)
     local metaData = additionalMetaData or {}
-        
-    for name, data in pairs(item.metaData) do
-        if metaData[name] then 
-            print("Metadata\27[31m", name, "\27[0malready exists on\27[31m", itemName) 
-            return	
-        end
 
-        metaData[name] = {
-            showToPlayer = data.showToPlayer,
-            value = data.onSpawn(),
-        }
+    if item.metaData then
+        for name, data in pairs(item.metaData) do
+            if metaData[name] then 
+                print("Metadata\27[31m", name, "\27[0malready exists on\27[31m", itemName) 
+                return	
+            end
+
+            metaData[name] = {
+                showToPlayer = data.showToPlayer,
+                value = data.onSpawn(),
+            }
+        end
     end
 
-    table.insert(inventory.unique, {
+    table.insert(inventory.uniques, {
             name = itemName,
             metaData = metaData
         } 
@@ -140,7 +143,8 @@ end
 
 
 -- createPlayerEntry(1)
-giveItem(1, "water_bottle", 1)
+-- giveItem(1, "reusable_water_bottle", 1)
+giveItem(1, "id_card", 1)
 -- removeItem(1, "water_bottle", 4)
 -- print("Inventory:", 
 --     json.encode(

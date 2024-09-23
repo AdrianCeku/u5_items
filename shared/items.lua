@@ -9,14 +9,14 @@ ITEMS = {
 
 
 --+--+--+--+--+--+--+ Food / Drinks +--+--+--+--+--+--+--+
-    ["water_bottle"] = {
+    ["reusable_water_bottle"] = {
         label = "Water Bottle",
         description = "A bottle of water.",
         category = "food",
-        weight = 1,
+        weight = 500,
         size = {x = 1, y = 3},
-        model = "prop_ld_flow_bottle",
-        stackable = true,
+        model = "h4_prop_battle_waterbottle_01a",
+        stackable = false,
         usable = true,
         useOptions = {
             removeAfterUse = 1,
@@ -45,8 +45,34 @@ ITEMS = {
         }
     },
 
---+--+--+--+--+--+--+ Food / Drinks +--+--+--+--+--+--+--+
+--+--+--+--+--+--+--+ licenses +--+--+--+--+--+--+--+
 
+["id_card"] = {
+    label = "ID Card",
+    description = "",
+    category = "licenses",
+    weight = 1,
+    size = {x = 1, y = 1},
+    model = "p_ld_id_card_01",
+    stackable = false,
+    usable = true,
+    useOptions = {
+        removeAfterUse = 0,
+        duration = 2000,
+    },
+    craftable = false,
+    craftOptions = {},
+    canBuy = true,
+    canSell = false,
+    prices = {
+        fiat = {
+            buy = 300,
+        },
+        black = {
+            buy = 1000,
+        }
+    }
+},
 
 --+--+--+--+--+--+--+ END +--+--+--+--+--+--+--+
 }

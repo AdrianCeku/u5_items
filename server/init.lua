@@ -56,6 +56,7 @@ local function checkItem(item, data)
 end
 
 local function addMetaData(item, name, showToPlayer, onSpawn, onUse, onDrop, onPickup)
+    print("Adding metadata", name, "to item", item)
     if not ITEMS[item] then
         print("Item\27[31m", item, "\27[0mdoes not exist")
         return
@@ -64,10 +65,6 @@ local function addMetaData(item, name, showToPlayer, onSpawn, onUse, onDrop, onP
     if ITEMS[item].stackable then
         print("Item\27[31m", item, "\27[0mis stackable. MetaData can only be added to non-stackable items!")
         return
-    end
-
-    if not ITEMS[item].metaData then
-        ITEMS[item].metaData = {}
     end
 
     if ITEMS[item].metaData[name] then
@@ -85,6 +82,8 @@ local function addMetaData(item, name, showToPlayer, onSpawn, onUse, onDrop, onP
 end
 
 local function initializeItem(item, data)
+    ITEMS[item].metaData = {}
+    
     if ITEM_METADATA[item] then
         for name, metaData in pairs(ITEM_METADATA[item]) do
             addMetaData(item, name, metaData.showToPlayer, metaData.onSpawn, metaData.onUse, metaData.onDrop, metaData.onPickup)
