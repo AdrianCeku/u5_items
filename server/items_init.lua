@@ -17,7 +17,11 @@ local function checkItem(item, data)
     if not checkType(data.size.x, "number", "size.x") then print(errorMessage, item) return false end
     if not checkType(data.size.y, "number", "size.y") then print(errorMessage, item) return false end
     if not checkType(data.model, "string", "model") then print(errorMessage, item) return false end
+    
     if not checkType(data.stackable, "boolean", "stackable") then print(errorMessage, item) return false end
+    if data.stackable then
+        if not checkType(data.maxStack, "number", "maxStack") then print(errorMessage, item) return false end
+    end
 
     if not checkType(data.usable, "boolean", "usable") then print(errorMessage, item) return false end
     if data.usable then

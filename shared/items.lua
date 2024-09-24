@@ -49,6 +49,7 @@ ITEMS = {
         size = {x = 1, y = 1},
         model = "prop_donut_02b",
         stackable = true,
+        maxStack = 10,
         usable = true,
         useOptions = {
             removeAfterUse = 1,
