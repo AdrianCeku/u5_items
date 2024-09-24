@@ -127,13 +127,19 @@ end
 
 -- helper
 local function addToStackables(stackables, itemName, amount)
-    print("addToStackables", json.encode(stackables), itemName, amount)
     local maxStack = ITEMS[itemName].maxStack
     local stacks = stackables[itemName]
     local leftOver = amount
-    print("maxStack", maxStack)
-    print("stackables", json.encode(stackables))
-    print("leftOver", leftOver)
+
+    if maxStack <= 0 then 
+        if not stacks then 
+            stackables[itemName] = {amount}
+        else 
+            stackables[itemName] = {stacks[1] + amount} 
+        end
+
+        return stackables 
+    end
 
     if stacks then
         for i=1, #stacks do
@@ -246,7 +252,7 @@ end
 local function giveContainerUniqueItem(container_name, itemName, additionalMetaData)
     local uniques = getContainerUniques(container_name)
     uniques = addToUniques(0, uniques, itemName, additionalMetaData)
-    if uniques then setContainerUniques(container_name, uniques) end
+    setContainerUniques(container_name, uniques)
 end
 
 function giveContainerItem(container_name, itemName, amount, additionalMetaData)
@@ -268,9 +274,10 @@ end
 --+--+--+--+--+--+--+ remove item +--+--+--+--+--+--+--+
 
 -- helper
-local function doesStackablesHaveItem(stackables, itemName, amount)
+local function doStackablesIncludeItem(stackables, itemName, amount)
     local stacks = stackables[itemName]
     local leftOver = amount
+    
     if stacks then
         for i=1, #stacks do
             if stacks[i] >= leftOver then return true end
@@ -284,15 +291,24 @@ end
 
 local function removeFromStackables(stackables, itemName, amount)
     local stacks = stackables[itemName]
+    local leftOver = amount
+    local stacksAmount = #stacks
+
+    for i=1, stacksAmount do
+        local reverseIndex = stacksAmount - i + 1
+        local stack = stacks[reverseIndex]
+
+        if stack > leftOver then
+            stackables[itemName][reverseIndex] = stack - leftOver
+            return stackables
+        else
+            leftOver = leftOver - stack
+            table.remove(stackables[itemName], reverseIndex)
+            if leftOver == 0 then return stackables end
+        end
+    end
 
     return stackables
-end
-
--- player
-function removePlayerStackable(source, itemName, amount)
-    local stackables = getPlayerStackables(source)
-    stackables = removeFromStackables(stackables, itemName, amount)
-    
 end
 
 local function doesMetaDataMatch(meta, metaDataToMatch)
@@ -304,18 +320,61 @@ local function doesMetaDataMatch(meta, metaDataToMatch)
     return true
 end
 
-function removePlayerUniqueItem(source, itemName, metaData)
-    local uniques = getPlayerUniques(source)
-    
+local function doUniquesIncludeItem(uniques, itemName, metaData)
     for i=1, #uniques do
         local item = uniques[i]
 
-        if item.itemName == itemName and doesMetaDataMatch(item.metaData, metaData) then
-            table.remove(uniques, i)
-            setPlayerUniques(source, uniques)
-            return true
+        if item.itemName == itemName then 
+            if metaData then 
+                if doesMetaDataMatch(item.metaData, metaData) then
+                    return true, i
+                end
+            else
+                return true, i
+            end
         end
     end
 
-    return false
+    return false, nil
+end
+
+local function removeFromUniques(uniques, index)
+    table.remove(uniques, index)
+    return uniques
+end
+
+-- player
+local function removePlayerStackable(source, itemName, amount)
+    local stackables = getPlayerStackables(source)
+    if not doStackablesIncludeItem(stackables, itemName, amount) then return false end
+    stackables = removeFromStackables(stackables, itemName, amount)
+    setPlayerStackables(source, stackables)
+    return true
+end
+
+local function removePlayerUniqueItem(source, itemName, metaData)
+    local uniques = getPlayerUniques(source)
+    local hasItem, index = doUniquesIncludeItem(uniques, itemName, metaData)
+    if not hasItem then return false end
+    uniques = removeFromUniques(uniques, index)
+    setPlayerUniques(source, uniques)
+    return true
+end
+
+function removePlayerItem(source, itemName, amount, metaData)
+    local item = ITEMS[itemName]
+    if not item then 
+        print("Item:\27[31m", itemName, "\27[0mdoes not exist")
+        return 
+    end
+
+    if item.stackable then
+        removePlayerStackable(source, itemName, amount)
+    else
+        for i=1, amount do
+            if not removePlayerUniqueItem(source, itemName, metaData) then
+                print("Player does not have item\27[31m", itemName, "\27[0mwith metaData\27[31m", json.encode(metaData))
+            end
+        end
+    end
 end
