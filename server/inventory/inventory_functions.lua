@@ -2,6 +2,7 @@ db = exports["u5_sqlite"]
 
 local playerInventoryTableName = "player_inventory"
 local containerInventoryTableName = "container_inventory"
+local emptyPlayerEntry = {stackable_items = "{}", unique_items = "{}"}
 
 function initTables()
     db:createTable(playerInventoryTableName,
@@ -16,7 +17,10 @@ function initTables()
         {
             {"container_name", "STRING", "AUTO PRIMARY KEY NOT NULL"},
             {"stackable_items", "TEXT", "NOT NULL"},
-            {"unique_items", "TEXT", "NOT NULL"}
+            {"unique_items", "TEXT", "NOT NULL"},
+            {"size_x", "INTEGER", "NOT NULL"},
+            {"size_y", "INTEGER", "NOT NULL"},
+            {"max_weight", "INTEGER", "NOT NULL"}
         }
     )
 end
@@ -29,12 +33,23 @@ local function getPlayerId(source)
 end
 
 local function createPlayerEntry(source)
-    print("createPlayerEntry", source)
-    db:insert(playerInventoryTableName, {player_id = getPlayerId(source), stackable_items = "{}", unique_items = "{}"})
+    db:insert(playerInventoryTableName, {
+        player_id = getPlayerId(source), 
+        stackable_items = "{}", 
+        unique_items = "{}"}
+    )
 end
 
-local function createContainerEntry(containerName)
-    db:insert(containerInventoryTableName, {container_name = container_name, stackable_items = "{}", unique_items = "{}"})
+local function createContainerEntry(containerName, sizeX, sizeY, maxWeight)
+    db:insert(containerInventoryTableName, {
+        container_name = container_name, 
+        stackable_items = "{}", 
+        unique_items = "{}",
+        size_x = sizeX,
+        size_y = sizeY,
+        max_weight = maxWeight
+        }
+    )
 end
 
 local deleteContainerEntry = function(containerName)
@@ -46,7 +61,7 @@ end
 -- player
 local function getPlayerFromDb(source, columns)
     local result = db:select(playerInventoryTableName, columns, {player_id = getPlayerId(source)})
-    if not result then createPlayerEntry(source) return {stackable_items = {}, uniques_items= {}} end
+    if not result then createPlayerEntry(source) return {stackable_items = "{}", uniques_items= "{}"} end
     return result[1]
 end
 
@@ -66,27 +81,7 @@ local function getPlayerInventory(source)
 end
 
 -- container
-local function getContainerFromDb(containerName, columns)
-    local result = db:select(containerInventoryTableName, columns, {container_name = containerName})
-    if not result then createContainerEntry(containerName) return {stackable_items = {}, uniques_items= {}} end
-    return result[1]
-end
-
-local function getContainerUniques(containerName)
-    local result = getContainerFromDb(containerName, {"unique_items"})
-    return json.decode(result.unique_items)
-end
-
-local function getContainerStackables(containerName)
-    local result = getContainerFromDb(containerName, {"stackable_items"})
-    return json.decode(result.stackable_items)
-end
-
-local function getContainerInventory(container_name)
-    local result = getContainerFromDb(container_name, {"stackable_items", "unique_items"})
-    if not result then createContainerEntry(container_name) return {stackables = {},  uniques= {}} end
-    return {stackables = result.stackable_items, uniques = result.unique_items}
-end
+--todo
 
 --+--+--+--+--+--+--+ set inventory +--+--+--+--+--+--+--+
 
@@ -108,21 +103,7 @@ local function setPlayerInventory(source, inventory)
 end
 
 -- container
-local function setContainerUniques(container_name, uniques)
-    db:update(containerInventoryTableName, {unique_items = json.encode(uniques)}, {container_name = container_name})
-end
-
-local function setContainerStackables(container_name, stackables)
-    db:update(containerInventoryTableName, {stackable_items = json.encode(stackables)}, {container_name = container_name})
-end
-
-local function setContainerInventory(container_name, inventory)
-    db:update(containerInventoryTableName, {
-        stackable_items = json.encode(inventory.stackables),
-        unique_items = json.encode(inventory.uniques)
-    }, {container_name = container_name})
-end
-
+-- todo
 --+--+--+--+--+--+--+ give item +--+--+--+--+--+--+--+
 
 -- helper
@@ -202,7 +183,7 @@ local function addToUniques(source, uniques, itemName, additionalMetaData)
     end
 
     table.insert(uniques, {
-            item = itemName,
+            itemName = itemName,
             metaData = metaData
         } 
     )
@@ -213,63 +194,32 @@ end
 -- player
 local function givePlayerStackableItem(source, itemName, amount)
     local stackables = getPlayerStackables(source)
-    print(json.encode(stackables))
     stackables = addToStackables(stackables, itemName, amount)
-    print(json.encode(stackables))
     setPlayerStackables(source, stackables)
 end
 
-local function givePlayerUniqueItem(source, itemName, additionalMetaData)
+local function givePlayerUniqueItem(source, itemName, amount, additionalMetaData)
     local uniques = getPlayerUniques(source)
-    addToUniques(source, uniques, itemName, additionalMetaData)
-    if uniques then setPlayerUniques(source, uniques) end
+    for i=1, amount do
+        uniques = addToUniques(source, uniques, itemName, additionalMetaData)
+    end
+    setPlayerUniques(source, uniques)
 end
 
 function givePlayerItem(source, itemName, amount, additionalMetaData)
     local item = ITEMS[itemName]
-    if not item then 
-        print("Item:\27[31m", itemName, "\27[0mdoes not exist")
-        return 
-    end
+    if not item then return end
 
     if item.stackable then
-        givePlayerStackableItem(source, itemName, amount)
+        return givePlayerStackableItem(source, itemName, amount)
     else
-        for i=1, amount do
-            givePlayerUniqueItem(source, itemName, additionalMetaData)
-        end
+        return givePlayerUniqueItem(source, itemName, amount, additionalMetaData)
     end
 end
 
 
 -- container
-local function giveContainerStackableItem(container_name, itemName, amount)
-    local stackables = getContainerStackables(container_name)
-    stackables = addToStackables(stackables, itemName, amount)
-    setContainerStackables(container_name, stackables)
-end
-
-local function giveContainerUniqueItem(container_name, itemName, additionalMetaData)
-    local uniques = getContainerUniques(container_name)
-    uniques = addToUniques(0, uniques, itemName, additionalMetaData)
-    setContainerUniques(container_name, uniques)
-end
-
-function giveContainerItem(container_name, itemName, amount, additionalMetaData)
-    local item = ITEMS[itemName]
-    if not item then 
-        print("Item:\27[31m", itemName, "\27[0mdoes not exist")
-        return 
-    end
-
-    if item.stackable then
-        giveContainerStackableItem(container_name, itemName, amount)
-    else
-        for i=1, amount do
-            giveContainerUniqueItem(container_name, itemName, additionalMetaData)
-        end
-    end
-end
+-- todo
 
 --+--+--+--+--+--+--+ remove item +--+--+--+--+--+--+--+
 
@@ -311,8 +261,11 @@ local function removeFromStackables(stackables, itemName, amount)
     return stackables
 end
 
-local function doesMetaDataMatch(meta, metaDataToMatch)
-    for key, value in pairs(matchMeta) do
+local function doesMetaIncludeKeysAndValues(meta, keysAndValues)
+    if not keysAndValues then return true end
+    if not meta then return false end
+
+    for key, value in pairs(keysAndValues) do
         if not meta[key] then return false end
         if meta[key].value ~= value then return false end
     end
@@ -324,23 +277,12 @@ local function doUniquesIncludeItem(uniques, itemName, metaData)
     for i=1, #uniques do
         local item = uniques[i]
 
-        if item.itemName == itemName then 
-            if metaData then 
-                if doesMetaDataMatch(item.metaData, metaData) then
-                    return true, i
-                end
-            else
-                return true, i
-            end
+        if item.itemName == itemName and doesMetaIncludeKeysAndValues(item.metaData, metaData) then
+            return true, i
         end
     end
 
     return false, nil
-end
-
-local function removeFromUniques(uniques, index)
-    table.remove(uniques, index)
-    return uniques
 end
 
 -- player
@@ -352,29 +294,28 @@ local function removePlayerStackable(source, itemName, amount)
     return true
 end
 
-local function removePlayerUniqueItem(source, itemName, metaData)
+local function removePlayerUniqueItem(source, itemName, amount, metaData)
     local uniques = getPlayerUniques(source)
-    local hasItem, index = doUniquesIncludeItem(uniques, itemName, metaData)
-    if not hasItem then return false end
-    uniques = removeFromUniques(uniques, index)
+
+    for i=1, amount do 
+        local hasItem, index = doUniquesIncludeItem(uniques, itemName, metaData)
+        print("hasItem", hasItem, "index", index)
+        print(json.encode(uniques))
+        if not hasItem then return false end
+        table.remove(uniques, index)
+    end
+
     setPlayerUniques(source, uniques)
     return true
 end
 
 function removePlayerItem(source, itemName, amount, metaData)
     local item = ITEMS[itemName]
-    if not item then 
-        print("Item:\27[31m", itemName, "\27[0mdoes not exist")
-        return 
-    end
+    if not item then return false end
 
     if item.stackable then
-        removePlayerStackable(source, itemName, amount)
+        return removePlayerStackable(source, itemName, amount)
     else
-        for i=1, amount do
-            if not removePlayerUniqueItem(source, itemName, metaData) then
-                print("Player does not have item\27[31m", itemName, "\27[0mwith metaData\27[31m", json.encode(metaData))
-            end
-        end
+        return removePlayerUniqueItem(source, itemName, amount, metaData)
     end
 end
