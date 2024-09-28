@@ -22,7 +22,9 @@ client_scripts{
 server_scripts{
 	"server/metadata.lua",
 	"server/items_init.lua",
-	"server/inventory/inventory_functions.lua",
+	"server/inventory/helpers.lua",
+	"server/inventory/player.lua",
+	"server/inventory/container.lua",
 	"server/inventory/inventory.lua",
 	"server/exports.lua",
 }

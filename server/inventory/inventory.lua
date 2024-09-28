@@ -1,4 +1,4 @@
-initTables()
+
 
 -- givePlayerItem(1,"donut", 2)
 local mockMeta = {
