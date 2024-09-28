@@ -11,6 +11,7 @@ version "0.1b"
 lua54 "yes"
 
 shared_scripts{
+	"shared/config.lua",
 	"shared/items.lua",
 }
 

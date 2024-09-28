@@ -94,6 +94,9 @@ end
 
 local function initializeItem(item, data)
     ITEMS[item].metaData = {}
+    if Config.setAllItemSizesTo1x1 then
+        ITEMS[item].size = {x = 1, y = 1}
+    end
 
     if ITEM_METADATA[item] then
         for name, metaData in pairs(ITEM_METADATA[item]) do
