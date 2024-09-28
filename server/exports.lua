@@ -61,6 +61,13 @@ function Player:setInventory(inventory)
     setPlayerInventory(self.source, inventory)
 end
 
+function Player:canCarryItems(itemName, amount)
+    local inventory = getPlayerInventory(self.source)
+    local canCarry = canPlayerCarryItems(inventory, itemName, amount)
+    local canFit = canPlayerFitItems(inventory, itemName, amount)
+    return canCarry and canFit
+end
+
 function Player:giveStackable(itemName, amount)
     return givePlayerStackableItem(self.source, itemName, amount)
 end

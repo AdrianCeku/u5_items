@@ -68,19 +68,16 @@ local function getSlotsOccupied(inventory)
 end
 
 function canContainerCarryItems(maxWeight, inventory, itemName, amount)
-    local stackables = inventory.stackables
-    local uniques = inventory.uniques
     local inventoryWeight = getInventoryWeight(inventory)
     local item = ITEMS[itemName]
+    local stackables = inventory.stackables
+    local uniques = inventory.uniques
 
-    if not item.stackable then
-        if inventoryWeight + item.weight * amount > maxWeight then return false end
-    else
-        inventory.stackables = addToStackables(stackables, itemName, amount)
-        if getInventoryWeight(inventory) > maxWeight then return false end
+    if inventoryWeight + (item.weight * amount) <= maxWeight then 
+        return true 
     end
 
-    return true
+    return false
 end
 
 function canPlayerCarryItems(inventory, itemName, amount)
@@ -88,10 +85,10 @@ function canPlayerCarryItems(inventory, itemName, amount)
 end
 
 function canContainerFitItems(sizeX, sizeY, inventory, itemName, amount)
-    local stackables = inventory.stackables
-    local maxSlots = sizeX * sizeY
     local slotsOccupied = getSlotsOccupied(inventory)
     local item = ITEMS[itemName]
+    local maxSlots = sizeX * sizeY
+    local stackables = inventory.stackables
 
     if not item.stackable then
         if slotsOccupied + (item.size.x * item.size.y * amount) > maxSlots then return false end
@@ -109,56 +106,43 @@ end
 
 local function addToStackables(stackables, itemName, amount)
     local maxStack = ITEMS[itemName].maxStack
-    local stacks = stackables[itemName]
     local leftOver = amount
 
+    if not stackables[itemName] then 
+        stackables[itemName] = {0}
+    end
+    
+    local stacks = stackables[itemName]
+    
+    -- MaxStack 0 means infinite stack
     if maxStack <= 0 then 
-        if not stacks then 
-            stackables[itemName] = {amount}
-        else 
-            stackables[itemName] = {stacks[1] + amount} 
-        end
-
+        stackables[itemName] = {stacks[1] + amount} 
         return stackables 
     end
 
-    if stacks then
-        for i=1, #stacks do
-            local stackAmount = stacks[i]
+    for i=1, #stacks do
+        local stackAmount = stacks[i]
 
-            if stackAmount < maxStack then
-                local spaceLeft = maxStack - stackAmount
-                
-                if leftOver <= spaceLeft then
-                    stacks[i] = stackAmount + leftOver
-                    return stackables
-                else
-                    stacks[i] = maxStack
-                    leftOver = leftOver - spaceLeft
-                end
-            end
-        end
-
-        while leftOver > 0 do
-            if leftOver <= maxStack then
-                table.insert(stackables[itemName], leftOver)
+        if stackAmount < maxStack then
+            local spaceLeft = maxStack - stackAmount
+            
+            if leftOver <= spaceLeft then
+                stacks[i] = stackAmount + leftOver
                 return stackables
             else
-                table.insert(stackables[itemName], maxStack)
-                leftOver = leftOver - maxStack
+                stacks[i] = maxStack
+                leftOver = leftOver - spaceLeft
             end
         end
-    else 
-        stackables[itemName] = {}
+    end
 
-        while leftOver > 0 do
-            if leftOver <= maxStack then
-                table.insert(stackables[itemName], leftOver)
-                return stackables
-            else
-                table.insert(stackables[itemName], maxStack)
-                leftOver = leftOver - maxStack
-            end
+    while leftOver > 0 do
+        if leftOver <= maxStack then
+            table.insert(stackables[itemName], leftOver)
+            return stackables
+        else
+            table.insert(stackables[itemName], maxStack)
+            leftOver = leftOver - maxStack
         end
     end
 
@@ -316,7 +300,7 @@ end
 
 --+--+--+--+--+--+--+ give item +--+--+--+--+--+--+--+
 
-local function givePlayerStackableItem(source, itemName, amount)
+function givePlayerStackableItem(source, itemName, amount)
     local inventory = getPlayerInventory(source)
     if (not canPlayerCarryItems(inventory.stackables, inventory.uniques, itemName, amount)
         or 
@@ -328,7 +312,7 @@ local function givePlayerStackableItem(source, itemName, amount)
     return true
 end
 
-local function givePlayerUniqueItem(source, itemName, amount, additionalMetaData)
+function givePlayerUniqueItem(source, itemName, amount, additionalMetaData)
     local inventory = getPlayerInventory(source)
     if (not canPlayerCarryItems(inventory.stackables, inventory.uniques, itemName, amount)
         or 
@@ -457,7 +441,7 @@ function setContainerInventory(containerName, inventory)
 end
 
 --+--+--+--+--+--+--+ give item +--+--+--+--+--+--+--+
---todo
+
 
 --+--+--+--+--+--+--+ remove item +--+--+--+--+--+--+--+
 --todo
